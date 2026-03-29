@@ -130,89 +130,91 @@
     </main>
 
     <script>
-        // --- FIREBASE CONFIGURATION ---
-        // Replace with your actual config from Firebase Console
-        const firebaseConfig = {
-            apiKey: "AIzaSyB1Xl7vHGcm_V1nK7Lygt0UzVAYRmq9cag",
-            authDomain: "global-money-club.firebaseapp.com",
-            projectId: "global-money-club",
-            storageBucket: "global-money-club.firebasestorage.app",
-            messagingSenderId: "48754881274",
-            appId: "1:48754881274:web:c477bfe94d04292ff48f43",
-	    measurementId: "G-935B1JC358"
-        };
+    const firebaseConfig = {
+        apiKey: "AIzaSyB1Xl7vHGcm_V1nK7Lygt0UzVAYRmq9cag",
+        authDomain: "global-money-club.firebaseapp.com",
+        projectId: "global-money-club",
+        storageBucket: "global-money-club.firebasestorage.app",
+        messagingSenderId: "48754881274",
+        appId: "1:48754881274:web:c477bfe94d04292ff48f43"
+    };
 
-        // Initialize
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
-        const auth = firebase.auth();
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.firestore();
+    const auth = firebase.auth();
 
-        const fileInput = document.getElementById('jar-upload');
-        const emailInput = document.getElementById('parent-email');
-        const status = document.getElementById('upload-status');
-        const errorLog = document.getElementById('error-log');
-        const btnText = document.getElementById('btn-label-text');
-        const btnUI = document.getElementById('upload-btn-ui');
-        const emailContainer = document.getElementById('email-field-container');
+    const fileInput = document.getElementById('jar-upload');
+    const emailInput = document.getElementById('parent-email');
+    const status = document.getElementById('upload-status');
+    const errorLog = document.getElementById('error-log');
+    const btnText = document.getElementById('btn-label-text');
+    const btnUI = document.getElementById('upload-btn-ui');
 
-        fileInput.addEventListener('change', async (e) => {
-            const file = e.target.files[0];
-            const email = emailInput.value.trim();
+    fileInput.addEventListener('change', async (e) => {
+        const file = e.target.files[0];
+        const email = emailInput.value.trim();
 
-            if (!email || !email.includes('@')) {
-                errorLog.innerText = "Please enter a valid email to receive your reward!";
-                errorLog.classList.remove('hidden');
-                fileInput.value = ""; 
-                return;
-            }
+        if (!email || !email.includes('@')) {
+            errorLog.innerText = "Please enter a valid email to receive your reward!";
+            errorLog.classList.remove('hidden');
+            fileInput.value = ""; 
+            return;
+        }
 
-            if (file) {
-                try {
-                    errorLog.classList.add('hidden');
-                    btnUI.style.pointerEvents = "none";
-                    btnText.innerHTML = `<div class="flex items-center gap-2"><div class="loading-spinner"></div> Processing...</div>`;
+        if (file) {
+            try {
+                errorLog.classList.add('hidden');
+                btnUI.style.pointerEvents = "none";
+                btnText.innerHTML = `<div class="flex items-center gap-2"><div class="loading-spinner"></div> Processing...</div>`;
 
-                    // 1. Ensure Auth (Anonymous)
-                    if (!auth.currentUser) {
-                        await auth.signInAnonymously();
-                    }
+                if (!auth.currentUser) await auth.signInAnonymously();
 
-                    // 2. Read file as Base64 (Small mobile photos work well in Firestore)
-                    const reader = new FileReader();
-                    reader.readAsDataURL(file);
-                    reader.onload = async () => {
-                        const base64Data = reader.result;
+                // IMAGE COMPRESSION LOGIC
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = (event) => {
+                    const img = new Image();
+                    img.src = event.target.result;
+                    img.onload = async () => {
+                        const canvas = document.createElement('canvas');
+                        const MAX_WIDTH = 800; // Resize to max 800px width
+                        const scaleSize = MAX_WIDTH / img.width;
+                        canvas.width = MAX_WIDTH;
+                        canvas.height = img.height * scaleSize;
 
-                        // 3. Save to Firestore
-                        // Collection Path matches Rule 1 for Public Data
-                        const appId = "global-money-club"; // Consistent ID for your app
-                        await db.collection('artifacts').doc(appId).collection('public').doc('data').collection('submissions').add({
+                        const ctx = canvas.getContext('2d');
+                        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        
+                        // Convert to compressed JPEG (0.7 quality)
+                        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+                        // Save to Firestore
+                        await db.collection('artifacts').doc('global-money-club')
+                                .collection('public').doc('data')
+                                .collection('submissions').add({
                             parentEmail: email,
-                            image: base64Data,
+                            image: compressedBase64,
                             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                            rewardStatus: 'pending',
-                            source: 'ai-mission-01'
+                            rewardStatus: 'pending'
                         });
 
-                        // 4. Update UI
+                        // UI Success State
                         btnUI.classList.add('hidden');
-                        emailContainer.classList.add('hidden');
+                        document.getElementById('email-field-container').classList.add('hidden');
                         status.classList.remove('hidden');
-                        setTimeout(() => {
-                            status.classList.add('opacity-100');
-                            status.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                        }, 100);
+                        setTimeout(() => status.classList.add('opacity-100'), 100);
                     };
+                };
 
-                } catch (err) {
-                    console.error("Firebase Error:", err);
-                    errorLog.innerText = "Error uploading photo. Please check your connection.";
-                    errorLog.classList.remove('hidden');
-                    btnText.innerText = "Capture Jar Photo";
-                    btnUI.style.pointerEvents = "auto";
-                }
+            } catch (err) {
+                console.error(err);
+                errorLog.innerText = "Upload failed. Please try again.";
+                errorLog.classList.remove('hidden');
+                btnUI.style.pointerEvents = "auto";
+                btnText.innerText = "Capture Jar Photo";
             }
-        });
-    </script>
+        }
+    });
+</script>
 </body>
 </html>
