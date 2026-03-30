@@ -198,6 +198,17 @@
                             rewardStatus: 'pending'
                         });
 
+			// NEW: Send data directly to Zapier Webhook
+			fetch('https://hooks.zapier.com/hooks/catch/27011567/un5bs2e/', {
+    				method: 'POST',
+    				mode: 'no-cors', // Prevents browser security blocks
+    				body: JSON.stringify({
+       					email: email,
+        				image_url: compressedBase64,
+        				mission: 'jar-photo-01'
+   				 })
+			});
+
                         // UI Success State
                         btnUI.classList.add('hidden');
                         document.getElementById('email-field-container').classList.add('hidden');
