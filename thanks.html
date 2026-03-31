@@ -155,80 +155,72 @@
         const email = emailInput.value.trim();
 
         if (!email || !email.includes('@')) {
-            errorLog.innerText = "Please enter a valid email to receive your reward!";
+            errorLog.innerText = "Please enter a valid email!";
             errorLog.classList.remove('hidden');
-            fileInput.value = ""; 
             return;
         }
 
+        console.log("Step 1: Starting upload for", email);
+
         if (file) {
             try {
-                errorLog.classList.add('hidden');
                 btnUI.style.pointerEvents = "none";
-                btnText.innerHTML = `<div class="flex items-center gap-2"><div class="loading-spinner"></div> Processing...</div>`;
+                btnText.innerHTML = `Processing...`;
 
                 if (!auth.currentUser) await auth.signInAnonymously();
+                console.log("Step 2: Firebase Auth Success");
 
-                // IMAGE COMPRESSION LOGIC
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
                 reader.onload = (event) => {
                     const img = new Image();
                     img.src = event.target.result;
                     img.onload = async () => {
+                        console.log("Step 3: Image Loaded");
+                        
                         const canvas = document.createElement('canvas');
-                        const MAX_WIDTH = 800; // Resize to max 800px width
+                        const MAX_WIDTH = 800;
                         const scaleSize = MAX_WIDTH / img.width;
                         canvas.width = MAX_WIDTH;
                         canvas.height = img.height * scaleSize;
-
                         const ctx = canvas.getContext('2d');
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        
-                        // Convert to compressed JPEG (0.7 quality)
                         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
-                        // Save to Firestore
-                        await db.collection('artifacts').doc('global-money-club')
-                                .collection('public').doc('data')
-                                .collection('submissions').add({
-                            parentEmail: email,
-                            image: compressedBase64,
-                            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
-                            rewardStatus: 'pending'
+                        // --- 1. FIREBASE ATTEMPT ---
+                        try {
+                            await db.collection('artifacts').doc('global-money-club')
+                                    .collection('public').doc('data')
+                                    .collection('submissions').add({
+                                parentEmail: email,
+                                image: compressedBase64,
+                                timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                            });
+                            console.log("Step 4: Firebase Save Success");
+                        } catch (fErr) {
+                            console.warn("Firebase failed, but trying Zapier anyway...", fErr);
+                        }
+
+                        // --- 2. ZAPIER ATTEMPT ---
+                        console.log("Step 5: Sending to Zapier...");
+                        fetch('https://hooks.zapier.com/hooks/catch/27011567/un5bs2e/', {
+                            method: 'POST',
+                            mode: 'no-cors', 
+                            body: JSON.stringify({
+                                email: email,
+                                mission: 'jar-photo-01'
+                            })
                         });
-
-			// NEW: Send data directly to Zapier Webhook
-			const zapierUrl = 'https://hooks.zapier.com/hooks/catch/27011567/un5bs2e/'; // Paste your actual URL here
-
-			fetch(zapierUrl, {
-    				method: 'POST',
-   				mode: 'cors', // Changed to 'cors'
-    				headers: {
-        				'Content-Type': 'application/json',
-    				},
-    				body: JSON.stringify({
-        				email: email,
-        				image_url: "Photo Received", // Keeping it simple for the first test
-        				mission: 'jar-photo-01',
-        				timestamp: new Date().toISOString()
-    				})
-			})
-			.then(response => console.log('Zapier caught it!', response))
-			.catch(error => console.error('Zapier error:', error));
-
-                        // UI Success State
+                        
+                        console.log("Step 6: UI Update");
                         btnUI.classList.add('hidden');
                         document.getElementById('email-field-container').classList.add('hidden');
                         status.classList.remove('hidden');
                         setTimeout(() => status.classList.add('opacity-100'), 100);
                     };
                 };
-
             } catch (err) {
-                console.error(err);
-                errorLog.innerText = "Upload failed. Please try again.";
-                errorLog.classList.remove('hidden');
+                console.error("Critical Error:", err);
                 btnUI.style.pointerEvents = "auto";
                 btnText.innerText = "Capture Jar Photo";
             }
