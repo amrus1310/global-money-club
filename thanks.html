@@ -199,15 +199,23 @@
                         });
 
 			// NEW: Send data directly to Zapier Webhook
-			fetch('https://hooks.zapier.com/hooks/catch/27011567/un5bs2e/', {
+			const zapierUrl = 'https://hooks.zapier.com/hooks/catch/27011567/un5bs2e/'; // Paste your actual URL here
+
+			fetch(zapierUrl, {
     				method: 'POST',
-    				mode: 'no-cors', // Prevents browser security blocks
+   				mode: 'cors', // Changed to 'cors'
+    				headers: {
+        				'Content-Type': 'application/json',
+    				},
     				body: JSON.stringify({
-       					email: email,
-        				image_url: compressedBase64,
-        				mission: 'jar-photo-01'
-   				 })
-			});
+        				email: email,
+        				image_url: "Photo Received", // Keeping it simple for the first test
+        				mission: 'jar-photo-01',
+        				timestamp: new Date().toISOString()
+    				})
+			})
+			.then(response => console.log('Zapier caught it!', response))
+			.catch(error => console.error('Zapier error:', error));
 
                         // UI Success State
                         btnUI.classList.add('hidden');
