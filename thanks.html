@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Comfortaa:wght@700&family=Quicksand:wght@500;700&display=swap" rel="stylesheet">
     
-    <!-- Firebase SDKs -->
     <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/11.0.2/firebase-firestore-compat.js"></script>
@@ -46,7 +45,6 @@
 </head>
 <body class="min-h-screen selection:bg-orange-200">
 
-    <!-- NAVIGATION -->
     <nav class="max-w-7xl mx-auto px-6 py-8 flex justify-between items-center">
         <div class="flex items-center gap-3">
             <div class="w-10 h-10 bg-orange-500 rounded-xl flex items-center justify-center text-white text-2xl shadow-lg">🦁</div>
@@ -58,18 +56,16 @@
     <main class="max-w-4xl mx-auto px-6 py-12">
         <div class="bg-white p-8 md:p-16 rounded-[40px] shadow-2xl border border-slate-100 relative overflow-hidden">
             
-            <!-- Success Header -->
             <div class="text-center mb-12">
                 <div class="inline-block bg-orange-100 text-orange-600 px-4 py-1 rounded-full text-xs font-bold uppercase tracking-widest mb-6">Mission Started!</div>
                 <h1 class="text-4xl md:text-5xl font-bold mb-6 leading-tight text-slate-900">
                     Roar! You're <span class="text-orange-500">In the Pride.</span>
                 </h1>
                 <p class="text-lg text-slate-600 max-w-xl mx-auto leading-relaxed">
-                    Step 1 is complete! Follow the mission below to set up your cub's financial future.
+                    Step 1 is complete! Check your email to download your kit, then come back here for the AI Challenge.
                 </p>
             </div>
 
-            <!-- STEP 1: VIDEO SECTION -->
             <div class="relative group mb-16">
                 <div class="absolute -inset-2 bg-orange-100 rounded-[36px] rotate-1 z-0 opacity-50 transition group-hover:rotate-0"></div>
                 <div class="relative z-10 aspect-video bg-slate-900 rounded-[32px] overflow-hidden shadow-2xl border-4 border-white">
@@ -78,16 +74,14 @@
                 <p class="mt-4 text-center text-slate-400 font-medium italic">Step 1: Watch Leo's welcome with your child</p>
             </div>
 
-            <!-- STEP 2: DOWNLOAD SECTION -->
             <div class="bg-slate-900 rounded-[32px] p-10 text-center text-white mb-12 relative overflow-hidden">
-                <h3 class="text-2xl font-bold mb-4 brand-font text-orange-400">Step 2: Get Your Labels</h3>
-                <p class="text-slate-400 mb-8 max-w-sm mx-auto">Download and print your "Save, Spend, Give" labels to start the journey.</p>
-                <a href="https://drive.google.com/uc?export=download&id=1idYXTJud2ew5PI3pkTmIUKDuMcKWauYJ" target="_blank" class="inline-block bg-orange-500 hover:bg-orange-600 text-white px-10 py-5 rounded-2xl font-bold shadow-xl transform hover:scale-105 transition-all text-lg">
-                    Download Kit 📥
-                </a>
+                <h3 class="text-2xl font-bold mb-4 brand-font text-orange-400">Step 2: Check Your Inbox</h3>
+                <p class="text-slate-400 mb-8 max-w-sm mx-auto">Leo just sent your "Save, Spend, Give" labels. Click the link in your email to download them!</p>
+                <div class="inline-block bg-white/10 px-6 py-3 rounded-2xl border border-white/20">
+                    <p class="text-sm font-bold text-orange-300 uppercase tracking-tighter">Waiting for your email? Continue to Step 3 below!</p>
+                </div>
             </div>
 
-            <!-- STEP 3: AI VALIDATOR BETA -->
             <div class="ai-glow bg-purple-50 rounded-[32px] p-8 md:p-12 text-center relative">
                 <div class="absolute -top-4 left-1/2 -translate-x-1/2 bg-purple-600 text-white px-4 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg text-nowrap">
                     AI Mission 01: Beta
@@ -100,7 +94,6 @@
                 </p>
                 
                 <div class="flex flex-col items-center justify-center gap-4">
-                    <!-- EMAIL FIELD: Crucial for Zapier/Kit identification -->
                     <div class="w-full max-w-xs text-left" id="email-field-container">
                         <label class="block text-[10px] font-bold text-purple-600 uppercase tracking-widest ml-1 mb-1">Confirm Parent Email</label>
                         <input type="email" id="parent-email" placeholder="leo@example.com" class="w-full px-5 py-4 rounded-2xl border-2 border-purple-100 focus:border-purple-400 focus:outline-none transition-all text-slate-700 font-bold">
@@ -116,7 +109,7 @@
                             <span class="text-xl">✅</span>
                             <span>Photo Received!</span>
                         </div>
-                        <p class="text-xs font-medium text-slate-500">Leo is analyzing... Check your email within 2 hours for your reward! 🦁✨. If you don't see it in 2 hours, check your 'Promotions' or 'Spam' folder and drag us to your Primary Inbox so you don't miss Mission #2.</p>
+                        <p class="text-xs font-medium text-slate-500">Leo is analyzing... Check your email within 2 hours for your reward! 🦁✨</p>
                     </div>
 
                     <div id="error-log" class="text-red-500 text-xs font-bold hidden"></div>
@@ -160,15 +153,12 @@
             return;
         }
 
-        console.log("Step 1: Starting upload for", email);
-
         if (file) {
             try {
                 btnUI.style.pointerEvents = "none";
                 btnText.innerHTML = `Processing...`;
 
                 if (!auth.currentUser) await auth.signInAnonymously();
-                console.log("Step 2: Firebase Auth Success");
 
                 const reader = new FileReader();
                 reader.readAsDataURL(file);
@@ -176,8 +166,6 @@
                     const img = new Image();
                     img.src = event.target.result;
                     img.onload = async () => {
-                        console.log("Step 3: Image Loaded");
-                        
                         const canvas = document.createElement('canvas');
                         const MAX_WIDTH = 800;
                         const scaleSize = MAX_WIDTH / img.width;
@@ -187,7 +175,6 @@
                         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
                         const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
 
-                        // --- 1. FIREBASE ATTEMPT ---
                         try {
                             await db.collection('artifacts').doc('global-money-club')
                                     .collection('public').doc('data')
@@ -196,13 +183,10 @@
                                 image: compressedBase64,
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp()
                             });
-                            console.log("Step 4: Firebase Save Success");
                         } catch (fErr) {
-                            console.warn("Firebase failed, but trying Zapier anyway...", fErr);
+                            console.warn("Firebase failed", fErr);
                         }
 
-                        // --- 2. ZAPIER ATTEMPT ---
-                        console.log("Step 5: Sending to Zapier...");
                         fetch('https://hooks.zapier.com/hooks/catch/27011567/un5bs2e/', {
                             method: 'POST',
                             mode: 'no-cors', 
@@ -212,7 +196,6 @@
                             })
                         });
                         
-                        console.log("Step 6: UI Update");
                         btnUI.classList.add('hidden');
                         document.getElementById('email-field-container').classList.add('hidden');
                         status.classList.remove('hidden');
